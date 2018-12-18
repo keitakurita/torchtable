@@ -6,17 +6,9 @@ import torch.utils.data
 
 from ..custom_types import *
 
-from ..utils import with_default
+from ..utils import with_default, flat_filter
 from ..operator import Operator, LambdaOperator, FillMissing, Categorize, Normalize
 from ..field import *
-
-def flat_filter(itr: Iterable[Union[T, Iterable[T]]], predicate: Callable[[T], bool]) -> Iterable[T]:
-    for x in itr:
-        if isinstance(x, (tuple, list)):
-            for x_ in x:
-                if predicate(x_): yield x_
-        else:
-            if predicate(x): yield x
 
 logger = logging.getLogger(__name__)
 
@@ -28,22 +20,18 @@ class TabularDataset(torch.utils.data.Dataset):
                 To specify multiple columns as input, use a tuple of column names.
                 To map a single column to multiple fields, use a list of fields.
                 Each field will be mapped to a single entry in the processed dataset.
-        train: Whether this dataset is the training set.
+        train: Whether this dataset is the training set. This affects whether the fields will fit the given data.
     Example:
         >>> df.head(2)
                   authorized_flag          card_id  price
         0               Y  C_ID_4e6213e9bc       1.2
         1               Y  C_ID_4e6213e9bc       3.4
         >>> TabularDataset.from_df(df, fields={
-        ...     # standard field
-        ...     "authorized_flag": CategoricalField(handle_unk=False),
-        ...     # multiple fields and custom fields
+        ...     "authorized_flag": CategoricalField(handle_unk=False), # standard field
         ...     "card_id": [CategoricalField(),
-        ...                 Field(LambdaOperator(lambda x: x.str[0]) > Categorize())],
-        ...     # target field
-        ...     "price": NumericalField(fill_missing=None, normalization=None, is_target=True),
-        ...     # multiple column field
-        ...     ("authorized_flag", "price"): IdentityField(),
+        ...                 Field(LambdaOperator(lambda x: x.str[0]) > Categorize())], # multiple fields and custom fields
+        ...     "price": NumericalField(fill_missing=None, normalization=None, is_target=True), # target field
+        ...     ("authorized_flag", "price"): IdentityField(), # multiple column field
         ... })
     """
     def __init__(self, examples: Dict[ColumnName, OneorMore[ArrayLike]],

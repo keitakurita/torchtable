@@ -19,3 +19,11 @@ def expand(a: OneorMore[T], n: int) -> Iterable[T]:
         return a
     else:
         return [a for _ in range(n)]
+
+def flat_filter(itr: Iterable[Union[T, Iterable[T]]], predicate: Callable[[T], bool]) -> Iterable[T]:
+    for x in itr:
+        if isinstance(x, (tuple, list)):
+            for x_ in x:
+                if predicate(x_): yield x_
+        else:
+            if predicate(x): yield x
