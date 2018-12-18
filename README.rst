@@ -1,3 +1,10 @@
+.. image:: https://circleci.com/gh/keitakurita/torchtable.svg?style=svg
+    :target: https://circleci.com/gh/keitakurita/torchtable
+
+.. image:: https://readthedocs.org/projects/torchtable/badge/?version=master
+    :target: https://torchtable.readthedocs.io/en/master/?badge=master
+    :alt: Documentation Status
+
 torchtable
 ++++++++++
 
@@ -8,8 +15,11 @@ Torchtable aims to be simple to use while being easily extensible. It provides s
 
 Installation
 ============
-Making the repository installable is still a work in progress.
+Install by cloning and running `pip install` (will make the package available on PyPi once stable)
 
+Documentation
+=============
+Documentation is a work in progress, but the current (incomplete) docs can be read `here <https://torchtable.readthedocs.io/en/master/>`_.
 
 Usage
 =====
