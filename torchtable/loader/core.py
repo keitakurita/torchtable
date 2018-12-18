@@ -42,7 +42,7 @@ class RandomShuffler(object):
         with self.use_internal_state():
             return random.sample(data, len(data))
 
-ProcessedBatch = Tuple[Dict[str, torch.tensor], Dict[str, torch.tensor]]
+ProcessedBatch = Tuple[Dict[ColumnName, OneorMore[torch.tensor]], Dict[ColumnName, OneorMore[torch.tensor]]]
 
 class DefaultLoader(torch.utils.data.DataLoader):
     """Defines an iterator that loads batches of data from a Dataset.
@@ -113,16 +113,23 @@ class DefaultLoader(torch.utils.data.DataLoader):
         if test_ds is not None:
             yield cls.from_dataset(test_ds, *([a[i] for a in args]), **({k: v[i] for k, v in kwargs.items()}))
 
-    def _process_batch(self, data: Dict[str, ArrayLike]) -> ProcessedBatch:
+    def _process_batch(self, data: Dict[ColumnName, OneorMore[ArrayLike]]) -> ProcessedBatch:
         """Converts examples in a dataset to model inputs by using the fields to transform
         the inputs to tensors. Implement in subclass to add custom behavior."""
         in_data = {}
         tgt_data = {}
-        for k, v in data.items():
+        for k, batch in data.items():
             fld = self.dataset.fields[k]
-            tsr = fld.transform_batch(v, device=self.device, train=self.dataset.train)
-            if fld.is_target: tgt_data[k] = tsr
-            else: in_data[k] = tsr
+            if isinstance(fld, (tuple, list)):
+                for f, v in zip(fld, batch):
+                    data_dict = tgt_data if f.is_target else in_data
+                    if k not in data_dict: data_dict[k] = []
+                    data_dict[k].append(f.transform_batch(v, device=self.device, train=self.dataset.train))
+            else:
+                tsr = fld.transform_batch(batch, device=self.device, train=self.dataset.train)
+                # add to data dicts
+                if fld.is_target: tgt_data[k] = tsr
+                else: in_data[k] = tsr
         return in_data, tgt_data
             
     def _batches(self) -> Iterable[ProcessedBatch]:
@@ -184,11 +191,3 @@ class DefaultLoader(torch.utils.data.DataLoader):
         self._iterations_this_epoch = state_dict["iterations_this_epoch"]
         self._random_state_this_epoch = state_dict["random_state_this_epoch"]
         self._restored_from_state = True
-
-class ContinuousJoinLoader(DefaultLoader):
-    """Joins all continuous input fields into a single output field."""
-    def _process_batch(self, data: Dict[str, ArrayLike]) -> ProcessedBatch:
-        x, y = super()._process_batch(data)
-        x_cont_keys = [k for k in x.keys() if self.dataset.fields[k].continuous]
-        x["continous"] = torch.cat([x.pop(k).reshape((-1, 1)) for k in x_cont_keys], dim=1)
-        return x, y

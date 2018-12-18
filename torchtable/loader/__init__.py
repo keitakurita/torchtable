@@ -1,3 +1,3 @@
 from .core import *
 
-__all__ = ["DefaultLoader", "ContinuousJoinLoader", ]
+__all__ = ["DefaultLoader", ]

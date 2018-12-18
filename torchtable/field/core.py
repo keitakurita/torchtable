@@ -54,7 +54,13 @@ class Field:
         self.batch_pipeline = with_default(batch_pipeline, ToTensor(dtype))
         
     def transform(self, x: pd.Series, train=True) -> ArrayLike:
-        """Method to process the input column during construction of the dataset."""
+        """
+        Method to process the input column during construction of the dataset.
+        Kwargs:
+            train: If true, this transformation may change some internal parameters of the pipeline.
+            For instance, if there is a normalization step in the pipeline, the mean and std will be computed on the current input.
+            Otherwise, the pipeline will use statistics computed in the past.
+        """
         return self.pipeline(x, train=train)
 
     def __repr__(self):

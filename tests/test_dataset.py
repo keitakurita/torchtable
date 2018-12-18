@@ -1,4 +1,5 @@
 import pytest
+
 from torchtable import *
 from torchtable.field import *
 from torchtable.operator import *
@@ -29,11 +30,12 @@ def test_multiple_fields():
         "c": None,
     })
     assert len(ds) == len(df)
-    assert len(ds.fields) == 3
+    assert len(ds.fields) == 2
     for i in range(len(ds)):
         example = ds[i]
         assert "a" in example
-        assert len(example) == 3
+        assert "b" in example
+        assert len(example) == 2
 
 def test_index_with_list():
     df = pd.DataFrame({"a": [1, 2, 3, 4, 5],
@@ -42,14 +44,15 @@ def test_index_with_list():
         "a": CategoricalField(max_features=100),
         "b": [NumericField(normalization="Gaussian"), IdentityField()],
     })
-    assert len(ds.fields) == 3
+    assert len(ds.fields) == 2
     list_idx = [0, 1, 3, 4]
     examples = ds[list_idx]
-    assert len(examples) == 3
+    assert len(examples) == 2
     assert len(examples["a"]) == 4
-    assert len(examples["b_0"]) == 4
-    assert len(examples["b_1"]) == 4
-    assert (examples["b_1"].values == df.iloc[list_idx]["b"].values).all()
+    assert len(examples["b"]) == 2
+    assert len(examples["b"][0]) == 4
+    assert len(examples["b"][1]) == 4
+    assert (examples["b"][1].values == df.iloc[list_idx]["b"].values).all()
 
 def test_from_dfs():
     df1 = pd.DataFrame({"a": [1, 2, 3, 4, 5],
@@ -122,3 +125,13 @@ def test_real_data_csv():
         "purchase_date": datetime_fields(),
         "purchase_amount": NumericField(normalization=None, fill_missing=None, is_target=True),
     }, train=True)
+
+def test_multiple_cols():
+    df1 = pd.DataFrame({"a": [1, 2, 3, 4, 5],
+                       "b": [-0.4, -2.1, 3.3, 4.4, 5.5]})
+    train = TabularDataset.from_df(df1, fields={
+        "a": CategoricalField(is_target=True),
+        "b": [NumericField(normalization="Gaussian"), CategoricalField(handle_unk=True)],
+        ("a", "b"): Field(LambdaOperator(lambda x: x["a"] + x["b"])),
+    })
+    np.testing.assert_allclose(train.examples[("a", "b")].values, (df1["a"] + df1["b"]).values)

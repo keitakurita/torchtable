@@ -65,7 +65,12 @@ class Operator:
         return self
 
     def apply(self, x: Any, train=True) -> Any:
-        """Takes output of previous stage in the pipeline and produces output. Override in subclasses."""
+        """
+        Takes output of previous stage in the pipeline and produces output. Override in subclasses.
+        Kwargs:
+            train: If true, this operator will "train" on the input. 
+            In other words, the internal parameters of this operator may change to fit the given input.
+        """
         return x
     
     def __call__(self, x, **kwargs):
