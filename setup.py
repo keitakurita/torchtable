@@ -24,6 +24,7 @@ setup(
     install_requires=[
         "numpy",
         "pandas",
+        "scipy",
         "torch>=1.0.0",
     ],
 )
