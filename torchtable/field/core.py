@@ -60,7 +60,7 @@ class Field:
     def __repr__(self):
         return f"{self.__class__.__name__}[{self.name}]"
     
-    def batch_transform(self, x: ArrayLike, device: Optional[torch.device]=None, 
+    def transform_batch(self, x: ArrayLike, device: Optional[torch.device]=None, 
                         train: bool=True) -> torch.tensor:
         """Method to process batch input during loading of the dataset."""
         return self.batch_pipeline(x, device=device, train=train)

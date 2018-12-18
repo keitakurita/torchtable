@@ -12,7 +12,9 @@ from ..field import Field, CategoricalField
 logger = logging.getLogger(__name__)
 
 class TabularDataset(torch.utils.data.Dataset):
+    """
     
+    """
     def __init__(self, examples: Dict[ColumnName, ArrayLike],
                  fields: Dict[ColumnName, Field], train=True):
         self.examples = examples

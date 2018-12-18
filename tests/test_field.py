@@ -64,4 +64,4 @@ def test_batch_transform():
     rng = np.random.RandomState(21)
     a = pd.Series(data=rng.normal(0, 1, (100, )))
     fld = NumericField()
-    fld.batch_transform(fld.transform(a))
+    fld.transform_batch(fld.transform(a))
