@@ -1,6 +1,6 @@
 *.txt
 !requirements.txt
-!requirements_dev.txt
+!requirements_docs.txt
 *.zip
 *~
 .vector_cache

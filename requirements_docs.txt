@@ -8,8 +8,6 @@ flake8==3.6.0
 idna==2.8
 mccabe==0.6.1
 more-itertools==4.3.0
-numpy==1.15.4
-pandas==0.23.4
 pluggy==0.8.0
 py==1.7.0
 pycodestyle==2.4.0
@@ -18,6 +16,5 @@ pytest==4.0.2
 python-dateutil==2.7.5
 pytz==2018.7
 requests==2.21.0
-scipy==1.2.0
 six==1.12.0
 urllib3==1.24.1
