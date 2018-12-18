@@ -6,7 +6,7 @@ import torch.utils.data
 
 from ..custom_types import *
 
-from ..utils import with_default, flat_filter
+from ..utils import with_default, flat_filter, apply_oneormore, fold_oneormore
 from ..operator import Operator, LambdaOperator, FillMissing, Categorize, Normalize
 from ..field import *
 
@@ -37,8 +37,8 @@ class TabularDataset(torch.utils.data.Dataset):
     def __init__(self, examples: Dict[ColumnName, OneorMore[ArrayLike]],
                  fields: Dict[ColumnName, OneorMore[Field]], train=True):
         self.examples = examples
-        # all fields should be of the same length
-        self.length = len(next(iter(self.examples.values())))
+        example = next(iter(self.examples.values()))
+        self.length = fold_oneormore(lambda x,y: len(y), example, [])
         self.fields = fields
         self.train = train
         self.continuous_fields = list(flat_filter(fields.values(), lambda x: x.continuous and not x.is_target))
@@ -49,6 +49,8 @@ class TabularDataset(torch.utils.data.Dataset):
         return self.length
     
     def _index_example(self, k: ColumnName, val: OneorMore[ArrayLike], idx) -> OneorMore[ArrayLike]:
+        # check if the field is a tuple/list since the field output might be a list
+        # even though the field itself is not
         if isinstance(self.fields[k], (tuple, list)):
             return [v[idx] for v in val]
         else:
@@ -74,18 +76,17 @@ class TabularDataset(torch.utils.data.Dataset):
             logger.warning(f"The following columns are missing from the fields list: {missing_cols}")
         
         examples = {}
+        
+        # internal function for managing fields
+        def compute_example_output(field, idx, key=None):
+            def_name = f"{key}_{idx}" if idx > -1 else key
+            field.name = with_default(field.name, def_name)
+            return field.transform(df[_to_df_key(k)], train=train)
+        
         for k, fld in fields.items():
             if fld is None: continue
-            if isinstance(fld, (tuple, list)):
-                # if multiple fields are specified, hook them all to the same column
-                examples[k] = []
-                for i, f in enumerate(fld):
-                    f.name = with_default(f.name, f"{k}_{i}")
-                    examples[k].append(f.transform(df[_to_df_key(k)], train=train))
-            else:
-                fld.name = with_default(fld.name, k)
-                examples[k] = fld.transform(df[_to_df_key(k)], train=train)
-        
+            examples[k] = apply_oneormore(lambda f,i: compute_example_output(f, i, key=k), fld)
+            
         return cls(examples, {k: v for k, v in fields.items() if v is not None}, train=train)
     
     @classmethod
@@ -106,6 +107,7 @@ class TabularDataset(torch.utils.data.Dataset):
         if test_df is not None:
             # remove all target fields
             non_target_fields = {}
+                
             for k, fld in fields.items():
                 if fld is None: continue
                 if isinstance(fld, (tuple, list)):

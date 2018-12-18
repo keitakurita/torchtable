@@ -27,3 +27,24 @@ def flat_filter(itr: Iterable[Union[T, Iterable[T]]], predicate: Callable[[T], b
                 if predicate(x_): yield x_
         else:
             if predicate(x): yield x
+
+def apply_oneormore(func, x: OneorMore[T]) -> OneorMore[Any]:
+    """
+    Returns multiple outputs for multiple inputs and a single output for a single input,
+    applying the same function in either case.
+    """
+    if isinstance(x, (tuple, list)):
+        return [func(item, idx) for idx, item in enumerate(x)]
+    else:
+        return func(x, -1)
+
+def fold_oneormore(func: Callable[[T, T], T], x: OneorMore[T], init: T) -> Any:
+    """
+    Aggregates multiple inputs by folding, simply applies for a single input.
+    """
+    if isinstance(x, (tuple, list)):
+        r = init
+        for v in x: r = func(r, x)
+        return r
+    else:
+        return func(init, x)
