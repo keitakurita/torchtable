@@ -21,10 +21,20 @@ class Field:
     This class can directly be instantiated with a custom pipeline.
     Example:
         >>> fld = Field(LambdaOperator(lambda x: x + 1) > LambdaOperator(lambda x: x ** 2))
+        >>> fld.transform(1)
+        ... 9
     Args:
         pipeline: An operator representing the set of operations mapping the input column to the output.
+        This transformation will be applied during the construction of the dataset. 
+        If the pipeline is resource intensive and applying it all at once is unrealistic, consider deferring some of the processing to `batch_pipeline`.
     Kwargs:
-        
+        is_target: Whether the field is an input or target field. Affects default batching behavior.
+        continuous: Whether the output is continuous.
+        categorical: Whether the output is categorical/discrete.
+        batch_pipeline: The transformation to apply to this field during batching.
+        By default, this will simply be an operation to transform the input to a tensor to feed to the model.
+        This can be set to any Operator that the user wishes so that arbitrary transformations (e.g. padding, noising) can be applied during data loading.
+        dtype: The output tensor dtype. Only relevant when batch_pipeline is None (using the default pipeline).
     """
     def __init__(self, pipeline: Operator, name: Optional[str]=None,
                  is_target: bool=False, continuous: bool=True,
@@ -45,7 +55,7 @@ class Field:
         self.batch_pipeline = with_default(batch_pipeline, ToTensor(dtype))
         
     def transform(self, x: pd.Series, train=True) -> ArrayLike:
-        """Method to process input column during construction of the dataset."""
+        """Method to process the input column during construction of the dataset."""
         return self.pipeline(x, train=train)
 
     def __repr__(self):
@@ -57,11 +67,20 @@ class Field:
         return self.batch_pipeline(x, device=device, train=train)
 
 class IdentityField(Field):
+    """
+    A field that does not modify the input.
+    """
     def __init__(self, name=None, is_target=False, continuous=True, categorical=False):
         super().__init__(LambdaOperator(lambda x: x), name=name,
                          is_target=is_target, continuous=continuous, categorical=categorical)
 
 class NumericField(Field):
+    """
+    A field corresponding to a continous, numerical output (e.g. price, distance, etc.)
+    Args:
+        fill_missing: The method of filling missing values. See the `FillMissing` operator for details.
+        normalization: The method of normalization. See the `Normalize` operator for details.
+    """
     def __init__(self, name=None,
                  fill_missing="median", normalization="Gaussian",
                  is_target=False):
@@ -69,6 +88,11 @@ class NumericField(Field):
         super().__init__(pipeline, name, is_target, continuous=True, categorical=False)
 
 class CategoricalField(Field):
+    """
+    A field corresponding to a categorica, discrete output (e.g. id, group, gender)
+    Args:
+        See the `Categorize` operator for more details.
+    """
     def __init__(self, name=None, min_freq=0, max_features=None,
                  handle_unk=None, is_target=False):
         pipeline = Categorize(min_freq=min_freq, max_features=max_features,
@@ -78,9 +102,15 @@ class CategoricalField(Field):
     
     @property
     def cardinality(self):
+        """The number of unique outputs."""
         return len(self.vocab)
 
 class DatetimeFeatureField(Field):
+    """
+    A generic field for constructing features from datetime columns.
+    Args:
+        func: Feature construction function
+    """
     def __init__(self, func: Callable[[pd.Series], pd.Series], fill_missing: Optional[str]=None,
                  name=None, is_target=False, continuous=False):
         pipeline = (LambdaOperator(lambda s: pd.to_datetime(s))
@@ -109,11 +139,13 @@ class HourField(DatetimeFeatureField):
         super().__init__(lambda x: x.hour, **kwargs)
 
 def date_fields(**kwargs) -> List[DatetimeFeatureField]:
+    """The default set of fields for feature engineering using a field with date information"""
     return [DayofWeekField(**kwargs), DayField(**kwargs),
             MonthStartField(**kwargs), MonthEndField(**kwargs),
            ]
 
 def datetime_fields(**kwargs) -> List[DatetimeFeatureField]:
+    """The default set of fields for feature engineering using a field with date and time information"""
     return [DayofWeekField(**kwargs), DayField(**kwargs),
             MonthStartField(**kwargs), MonthEndField(**kwargs),
             HourField(**kwargs),
