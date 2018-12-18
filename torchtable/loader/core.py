@@ -120,7 +120,7 @@ class DefaultLoader(torch.utils.data.DataLoader):
         tgt_data = {}
         for k, v in data.items():
             fld = self.dataset.fields[k]
-            tsr = fld.to_tensor(v, device=self.device, train=self.dataset.train)
+            tsr = fld.batch_transform(v, device=self.device, train=self.dataset.train)
             if fld.is_target: tgt_data[k] = tsr
             else: in_data[k] = tsr
         return in_data, tgt_data

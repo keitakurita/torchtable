@@ -57,15 +57,9 @@ def test_date_fields():
     for fld_type in [DayofWeekField, DayField, MonthStartField, MonthEndField]:
         assert not pd.isnull(fld_type().transform(x)).any()
 
-def test_to_tensor():
-    """Smoke test for the to_tensor method"""
+def test_batch_transform():
+    """Smoke test for batch transformations"""
     rng = np.random.RandomState(21)
-    x = pd.Series(data=rng.normal(0, 1, (100, )))
+    a = pd.Series(data=rng.normal(0, 1, (100, )))
     fld = NumericField()
-    tsr = fld.to_tensor(fld.transform(x), device=None)
-
-def test_to_tensor_bool():
-    """Smoke test for the to_tensor method for boolean data"""
-    x = pd.Series(data=np.array([True, False, True, False]))
-    fld = NumericField()
-    tsr = fld.to_tensor(fld.transform(x), device=None)
+    fld.batch_transform(fld.transform(a))

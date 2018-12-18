@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import pandas as pd
 
@@ -5,18 +6,30 @@ import torch.utils.data
 from pathlib import Path
 import warnings
 
-from ..operator import Operator, LambdaOperator, FillMissing, Categorize, Normalize
+from ..operator import Operator, LambdaOperator, FillMissing, Categorize, Normalize, ToTensor
 
 from ..custom_types import *
 
 from ..utils import *
 
+logger = logging.getLogger(__name__)
+
 class Field:
-    """A single field in the output mini batch that represents a set of operations to perform to a set of inputs.
-    Base class for other fields. Can be instantiated by passing a pipeline."""
+    """
+    A single field in the output mini batch. 
+    A Field object wraps a pipeline to apply to a column/set of columns in the input.
+    This class can directly be instantiated with a custom pipeline.
+    Example:
+        >>> fld = Field(LambdaOperator(lambda x: x + 1) > LambdaOperator(lambda x: x ** 2))
+    Args:
+        pipeline: An operator representing the set of operations mapping the input column to the output.
+    Kwargs:
+        
+    """
     def __init__(self, pipeline: Operator, name: Optional[str]=None,
                  is_target: bool=False, continuous: bool=True,
-                 categorical: bool=False, dtype: Optional[torch.dtype]=None):
+                 categorical: bool=False, batch_pipeline: Optional[Operator]=None,
+                 dtype: Optional[torch.dtype]=None):
         self.pipeline = pipeline
         self.name = name
         self.is_target = is_target
@@ -25,8 +38,12 @@ class Field:
             If you want both a categorical and continuous representation, consider using multiple fields.""")
         self.continuous = continuous
         self.categorical = categorical
-        self.dtype = with_default(dtype, torch.long if self.categorical else torch.float)
-    
+        if dtype is not None and batch_pipeline is not None:
+            logger.warning("""Setting a custom batch pipeline will cause this field to ignore the dtype argument.
+            If you want to manually set the dtype, consider attaching a ToTensor operation to the pipeline.""")
+        dtype = with_default(dtype, torch.long if self.categorical else torch.float)
+        self.batch_pipeline = with_default(batch_pipeline, ToTensor(dtype))
+        
     def transform(self, x: pd.Series, train=True) -> ArrayLike:
         """Method to process input column during construction of the dataset."""
         return self.pipeline(x, train=train)
@@ -34,13 +51,10 @@ class Field:
     def __repr__(self):
         return f"{self.__class__.__name__}[{self.name}]"
     
-    def to_tensor(self, x: ArrayLike, device: torch.device, train=True) -> torch.tensor:
-        """Method to convert input batch to a `torch.tensor` during batching of input."""
-        arr = to_numpy_array(x)
-        # convert dtype to PyTorch compatible type
-        if arr.dtype == np.bool_:
-            arr = arr.astype("int")
-        return torch.tensor(arr, dtype=self.dtype, device=device)
+    def batch_transform(self, x: ArrayLike, device: Optional[torch.device]=None, 
+                        train: bool=True) -> torch.tensor:
+        """Method to process batch input during loading of the dataset."""
+        return self.batch_pipeline(x, device=device, train=train)
 
 class IdentityField(Field):
     def __init__(self, name=None, is_target=False, continuous=True, categorical=False):

@@ -1,4 +1,5 @@
 import pytest
+import torch
 import numpy as np
 import pandas as pd
 
@@ -67,3 +68,18 @@ def test_categorize_unknown():
     a_transformed = cat(a, train=False)
     assert (a_transformed[a > 5] == 0).all()
     assert (a_transformed[a <= 5] > 0).all()
+
+def test_to_tensor():
+    """Smoke test for ToTensor"""
+    rng = np.random.RandomState(21)
+    a = pd.Series(data=rng.normal(0, 1, (100, )))
+    to_tsr = ToTensor(torch.float)
+    tsr = to_tsr(a, device=None)
+    tsr = to_tsr(a.values, device=None)
+
+def test_to_tensor_bool():
+    """Smoke test for ToTensor with boolean inputs"""
+    x = pd.Series(data=np.array([True, False, True, False]))
+    to_tsr = ToTensor(torch.long)
+    tsr = to_tsr(x, device=None)
+    tsr = to_tsr(x.values, device=None)
