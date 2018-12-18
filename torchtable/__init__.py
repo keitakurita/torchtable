@@ -1,8 +1,8 @@
 from .custom_types import *
-from .utils import *
-from .operator import *
-from .field import *
-from .dataset import *
-from .loader import *
+from . import utils
+from . import operator
+from . import field
+from . import dataset
+from . import loader
 
 __version__ = '0.1.0'

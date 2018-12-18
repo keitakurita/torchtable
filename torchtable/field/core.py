@@ -6,11 +6,10 @@ import torch.utils.data
 from pathlib import Path
 import warnings
 
-from ..operator import Operator, LambdaOperator, FillMissing, Categorize, Normalize, ToTensor
-
 from ..custom_types import *
 
 from ..utils import *
+from ..operator import Operator, LambdaOperator, FillMissing, Categorize, Normalize, ToTensor
 
 logger = logging.getLogger(__name__)
 

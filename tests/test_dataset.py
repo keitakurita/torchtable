@@ -1,5 +1,8 @@
 import pytest
 from torchtable import *
+from torchtable.field import *
+from torchtable.operator import *
+from torchtable.dataset import *
 
 def test_basic():
     df = pd.DataFrame({"a": [50, 40, 30, 20, 10],

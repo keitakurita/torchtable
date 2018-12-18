@@ -2,6 +2,9 @@ import pytest
 import itertools
 
 from torchtable import *
+from torchtable.field import *
+from torchtable.dataset import *
+from torchtable.loader import *
 
 def test_from_dataset():
     df = pd.DataFrame({"a": [1, 2, 3, 4, 5],

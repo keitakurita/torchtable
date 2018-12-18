@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from torchtable import *
+from torchtable.operator import *
 
 def test_pipe():
     op1 = LambdaOperator(lambda x: x + 1)

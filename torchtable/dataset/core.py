@@ -7,8 +7,7 @@ import torch.utils.data
 from ..custom_types import *
 
 from ..operator import Operator, LambdaOperator, FillMissing, Categorize, Normalize
-
-from ..field import Field
+from ..field import Field, CategoricalField
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,8 @@
 import pytest
 
 from torchtable import *
+from torchtable.operator import *
+from torchtable.field import *
 
 def test_field():
     fld = Field(LambdaOperator(lambda x: x + 1) > LambdaOperator(lambda x: x ** 2))
