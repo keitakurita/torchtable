@@ -10,7 +10,7 @@ VERSION = "0.1.0"
 long_description = open(os.path.join(cd, 'README.rst'), "rt", encoding="utf-8").read()
 
 setup(
-    name="torchtext",
+    name="torchtable",
     version=VERSION,
     author="Keita Kurita",
     author_email="keita.kurita@gmail.com",
