@@ -12,8 +12,10 @@ from ..custom_types import *
 from ..utils import *
 
 class RandomShuffler(object):
-    """Use random functions while keeping track of the random state to make it
-    reproducible and deterministic. Borrowed from torchtext."""
+    """
+    Use random functions while keeping track of the random state to make it
+    reproducible and deterministic. Borrowed from torchtext.
+    """
 
     def __init__(self, random_state=None):
         self._random_state = random_state
@@ -45,17 +47,18 @@ class RandomShuffler(object):
 ProcessedBatch = Tuple[Dict[ColumnName, OneorMore[torch.tensor]], Dict[ColumnName, OneorMore[torch.tensor]]]
 
 class DefaultLoader(torch.utils.data.DataLoader):
-    """Defines an iterator that loads batches of data from a Dataset.
+    """
+    Defines an iterator that loads batches of data from a Dataset.
     Heavily based on the Iterator from torchtext.
 
-    Attributes:
-        dataset: The Dataset object to load Examples from.
+    Args:
+        dataset: The Dataset object to load examples from.
         batch_size: Batch size.
-        repeat: Whether to repeat the iterator for multiple epochs. Default: False.
+        repeat: Whether to repeat the iterator for multiple epochs.
         shuffle: Whether to shuffle examples between epochs.
         device (str or `torch.device`): A string or instance of `torch.device`
             specifying which device the Variables are going to be created on.
-            If None, the tensors will be created on cpu. Default: None.
+            If None, the tensors will be created on cpu.
     """
 
     def __init__(self, dataset: torch.utils.data.Dataset, batch_size: int,
@@ -114,8 +117,10 @@ class DefaultLoader(torch.utils.data.DataLoader):
             yield cls.from_dataset(test_ds, *([a[i] for a in args]), **({k: v[i] for k, v in kwargs.items()}))
 
     def _process_batch(self, data: Dict[ColumnName, OneorMore[ArrayLike]]) -> ProcessedBatch:
-        """Converts examples in a dataset to model inputs by using the fields to transform
-        the inputs to tensors. Implement in subclass to add custom behavior."""
+        """
+        Converts examples in a dataset to model inputs by using the fields to transform
+        the inputs to tensors. Override in subclass to add custom behavior.
+        """
         in_data = {}
         tgt_data = {}
         for k, batch in data.items():
@@ -133,8 +138,10 @@ class DefaultLoader(torch.utils.data.DataLoader):
         return in_data, tgt_data
             
     def _batches(self) -> Iterable[ProcessedBatch]:
-        """Iterates through the dataset while generating batches of input and target variables.
-        Assumes dataset can be indexed using a list."""
+        """
+        Iterates through the dataset while generating batches of input and target variables.
+        Assumes dataset can be indexed using a list.
+        """
         indices = []
         for i in self.index_generator(range(len(self.dataset))):
             indices.append(i)
