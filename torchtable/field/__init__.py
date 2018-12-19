@@ -1,4 +1,5 @@
 from .core import *
+from .datetime import *
 
 __all__ = ["Field", "IdentityField", "NumericField",
            "CategoricalField", "DatetimeFeatureField",
