@@ -97,3 +97,7 @@ def test_index_fieldcollection():
     arr1, arr2 = flds.index([np.array([5, 4, 2, 3, 1]), np.array([1, 2, 3, 4, 5])], [1, 4, 2])
     np.testing.assert_almost_equal(arr1, np.array([4, 1, 2]))
     np.testing.assert_almost_equal(arr2, np.array([2, 5, 3]))
+
+def test_fieldcollection_transform():
+    flds = FieldCollection(Field(LambdaOperator(lambda x: x * 2)), Field(LambdaOperator(lambda x: x + 3)))
+    assert flds.transform(1) == [2, 4]

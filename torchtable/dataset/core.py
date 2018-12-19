@@ -76,21 +76,19 @@ class TabularDataset(torch.utils.data.Dataset):
         for k, v in fields.items():
             if isinstance(v, (tuple, list)): fields[k] = FieldCollection(*v)
         
-        examples = {}
-        # internal function for managing fields
-        # TODO: remove and replace
-        def compute_example_output(field, idx, key=None):
+        def _to_df_key(k):
             # change tuples to lists for accessing dataframe columns
-            def _to_df_key(k):
-                if isinstance(k, tuple): return list(k)
-                else: return k
-            def_name = f"{key}_{idx}" if idx > -1 else key
-            field.name = with_default(field.name, def_name)
-            return field.transform(df[_to_df_key(k)], train=train)
-        
+            # this is necessary since lists cannot be dictionary keys
+            if isinstance(k, tuple): return list(k)
+            else: return k
+
+        # construct examples while setting names
+        examples = {}            
         for k, fld in fields.items():
             if fld is None: continue
-            examples[k] = apply_oneormore(lambda f,i: compute_example_output(f, i, key=k), fld)
+            # fields are either a Field or FieldCollection, so the following code works
+            fld.name = k
+            examples[k] = fld.transform(df[_to_df_key(k)], train=train)
         
         return cls(examples, {k: v for k, v in fields.items() if v is not None}, train=train)
     

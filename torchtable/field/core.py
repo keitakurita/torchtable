@@ -197,3 +197,7 @@ class FieldCollection(list):
     @name.setter
     def name(self, nm: str):
         self.set_namespace(nm)
+    
+    def transform(self, *args, **kwargs) -> list:
+        """Applies transform with each field and returns a list"""
+        return [fld.transform(*args, **kwargs) for fld in self]
