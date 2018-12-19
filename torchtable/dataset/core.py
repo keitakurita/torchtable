@@ -14,6 +14,26 @@ logger = logging.getLogger(__name__)
 
 FieldOrFields = Union[Field, FieldCollection, Collection[Field]]
 
+class FieldDict(dict):
+    """Dictionary with additional methods. Intended for internal use with the TabularDataset."""
+    def flatmap(self, func: Callable[[str, Field], Any], with_index=False):
+        for k, v in self.items():
+            if isinstance(v, FieldCollection):
+                for (i, f) in enumerate(v):
+                    if with_index: yield func(key, f, i)
+                    else: yield func(key, f)
+            else:
+                if with_index: yield func(x, -1) 
+                else: yield func(key, x)   
+
+    def flatfilter(self, predicate: Callable[[str, Field], bool]):
+        for k, fld in self.items():
+            if isinstance(fld, FieldCollection):
+                for f in fld:
+                    if predicate(k, f): yield  f
+            else:
+                if predicate(k, fld): yield fld
+
 class TabularDataset(torch.utils.data.Dataset):
     """
     A dataset for tabular data.
@@ -25,16 +45,16 @@ class TabularDataset(torch.utils.data.Dataset):
         train: Whether this dataset is the training set. This affects whether the fields will fit the given data.
     """
     def __init__(self, examples: Dict[ColumnName, OneorMore[ArrayLike]],
-                 fields: Dict[ColumnName, Union[Field, FieldCollection]], train=True):
+                 fields: FieldDict, train=True):
         """This constructor is not intended to be called directly."""
         self.examples = examples
         example = next(iter(self.examples.values()))
         self.length = fold_oneormore(lambda x,y: len(y), example, [])
         self.fields = fields
         self.train = train
-        self.continuous_fields = list(flat_filter(fields.values(), lambda x: x.continuous and not x.is_target))
-        self.categorical_fields = list(flat_filter(fields.values(), lambda x: x.categorical and not x.is_target))
-        self.target_fields = list(flat_filter(fields.values(), lambda x: x.is_target))
+        self.continuous_fields = list(self.fields.flatfilter(lambda _, x: x.continuous and not x.is_target))
+        self.categorical_fields = list(self.fields.flatfilter(lambda _, x: x.categorical and not x.is_target))
+        self.target_fields = list(self.fields.flatfilter(lambda _, x: x.is_target))
                                   
     def __len__(self):
         return self.length
@@ -106,7 +126,7 @@ class TabularDataset(torch.utils.data.Dataset):
             else: return k
 
         # construct examples while setting names
-        final_dataset_fields = {}
+        final_dataset_fields = FieldDict()
         examples = {}            
         for k, fld in fields.items():
             if fld is None: continue

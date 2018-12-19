@@ -116,7 +116,7 @@ class DefaultLoader(torch.utils.data.DataLoader):
         if test_ds is not None:
             yield cls.from_dataset(test_ds, *([a[i] for a in args]), **({k: v[i] for k, v in kwargs.items()}))
 
-    def _process_batch(self, data: Dict[ColumnName, OneorMore[ArrayLike]]) -> ProcessedBatch:
+    def _examples_to_batch(self, data: Dict[ColumnName, OneorMore[ArrayLike]]) -> ProcessedBatch:
         """
         Converts examples in a dataset to model inputs by using the fields to transform
         the inputs to tensors. Override in subclass to add custom behavior.
@@ -146,10 +146,10 @@ class DefaultLoader(torch.utils.data.DataLoader):
         for i in self.index_generator(range(len(self.dataset))):
             indices.append(i)
             if len(indices) == self.batch_size:
-                yield self._process_batch(self.dataset[indices])
+                yield self._examples_to_batch(self.dataset[indices])
                 indices = []
         if len(indices) > 0:
-            yield self._process_batch(self.dataset[indices])    
+            yield self._examples_to_batch(self.dataset[indices])    
 
     def init_epoch(self):
         """Set up the batch generator for a new epoch."""
