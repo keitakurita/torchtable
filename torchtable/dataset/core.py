@@ -12,6 +12,8 @@ from ..field import *
 
 logger = logging.getLogger(__name__)
 
+FieldOrFields = Union[Field, FieldCollection, Collection[Field]]
+
 class TabularDataset(torch.utils.data.Dataset):
     """
     A dataset for tabular data.
@@ -21,21 +23,9 @@ class TabularDataset(torch.utils.data.Dataset):
                 To map a single column to multiple fields, use a list of fields.
                 Each field will be mapped to a single entry in the processed dataset.
         train: Whether this dataset is the training set. This affects whether the fields will fit the given data.
-    Example:
-        >>> df.head(2)
-                  authorized_flag          card_id  price
-        0               Y  C_ID_4e6213e9bc       1.2
-        1               Y  C_ID_4e6213e9bc       3.4
-        >>> TabularDataset.from_df(df, fields={
-        ...     "authorized_flag": CategoricalField(handle_unk=False), # standard field
-        ...     "card_id": [CategoricalField(),
-        ...                 Field(LambdaOperator(lambda x: x.str[0]) > Categorize())], # multiple fields and custom fields
-        ...     "price": NumericalField(fill_missing=None, normalization=None, is_target=True), # target field
-        ...     ("authorized_flag", "price"): IdentityField(), # multiple column field
-        ... })
     """
     def __init__(self, examples: Dict[ColumnName, OneorMore[ArrayLike]],
-                 fields: Dict[ColumnName, OneorMore[Field]], train=True):
+                 fields: Dict[ColumnName, Union[Field, FieldCollection]], train=True):
         self.examples = examples
         example = next(iter(self.examples.values()))
         self.length = fold_oneormore(lambda x,y: len(y), example, [])
@@ -65,16 +55,43 @@ class TabularDataset(torch.utils.data.Dataset):
         return f"TabularDataset({nl + fields_rep + nl})"
         
     @classmethod
-    def from_df(cls, df: pd.DataFrame, fields: Dict[ColumnName, OneorMore[Field]],
+    def from_df(cls, df: pd.DataFrame, fields: Dict[ColumnName, FieldOrFields],
                 train=True) -> 'TabularDataset':
-        """Initialize a dataset from a pandas dataframe."""
+        """
+        Initialize a dataset from a pandas dataframe.
+        Args:
+            df: pandas dataframe to initialize from
+            fields: Dictionary mapping from a column identifier to a field or fields.
+            The key can be a single column name or a tuple of multiple columns. The column(s) specified by the key will be passed to the field(s) transform method.
+            The value can be a single field, a list/tuple of fields, or a `field.FieldCollection`.
+            In general, each example in the dataset will mirror the structure of the fields passed.
+            For instance, if you pass multiple fields for a certain key, the example will also have multiple outputs for the given key structured as a list.
+        Example:
+        >>> df.head(2)
+                  authorized_flag          card_id  price
+        0               Y  C_ID_4e6213e9bc       1.2
+        1               Y  C_ID_4e6213e9bc       3.4
+        >>> ds = TabularDataset.from_df(df, fields={
+        ...     "authorized_flag": CategoricalField(handle_unk=False), # standard field
+        ...     "card_id": [CategoricalField(handle_unk=True),
+        ...                 Field(LambdaOperator(lambda x: x.str[0]) > Categorize())], # multiple fields and custom fields
+        ...     "price": NumericField(fill_missing=None, normalization=None, is_target=True), # target field
+        ...     ("authorized_flag", "price"): Field(LambdaOperator(
+        ...             lambda x: (x["authorized_flag"] == "N").astype("int") * x["price"])), # multiple column field
+        ... })
+        >>> ds[0] 
+        {"authorized_flag": 0,
+         "card_id": [1, 0],
+          "price": 1.2,
+          ("authorized_flag", "price"): 0.}
+        """
         missing_cols = set(df.columns) - set(fields.keys())
         if len(missing_cols) > 0:
             logger.warning(f"The following columns are missing from the fields list: {missing_cols}")
         
-        # convert lists/tuples of fields to FieldCollections
+        # convert raw lists/tuples of fields to FieldCollections
         for k, v in fields.items():
-            if isinstance(v, (tuple, list)): fields[k] = FieldCollection(*v)
+            if type(v) in (tuple, list): fields[k] = FieldCollection(*v)
         
         def _to_df_key(k):
             # change tuples to lists for accessing dataframe columns
