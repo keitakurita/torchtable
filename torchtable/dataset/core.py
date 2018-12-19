@@ -61,11 +61,16 @@ class TabularDataset(torch.utils.data.Dataset):
         Initialize a dataset from a pandas dataframe.
         Args:
             df: pandas dataframe to initialize from
+
             fields: Dictionary mapping from a column identifier to a field or fields.
             The key can be a single column name or a tuple of multiple columns. The column(s) specified by the key will be passed to the field(s) transform method.
             The value can be a single field, a list/tuple of fields, or a `field.FieldCollection`.
             In general, each example in the dataset will mirror the structure of the fields passed.
             For instance, if you pass multiple fields for a certain key, the example will also have multiple outputs for the given key structured as a list.
+            If you want a flat dictionary for the example, consider using the `flatten` attribute in the `field.FieldCollection` class
+            (see `field.FieldCollection` documentation for more details).
+        Kwargs:
+            train: Whether this dataset is the training set. This affects whether the fields will fit the given data.
         Example:
         >>> df.head(2)
                   authorized_flag          card_id  price
@@ -100,19 +105,27 @@ class TabularDataset(torch.utils.data.Dataset):
             else: return k
 
         # construct examples while setting names
+        final_dataset_fields = {}
         examples = {}            
         for k, fld in fields.items():
             if fld is None: continue
             # fields are either a Field or FieldCollection, so the following code works
             fld.name = k
-            examples[k] = fld.transform(df[_to_df_key(k)], train=train)
+            if isinstance(fld, FieldCollection) and fld.flatten:
+                # construct a flat representation
+                for sub_fld, output in zip(fld, fld.transform(df[_to_df_key(k)], train=train)):
+                    examples[sub_fld.name] = output
+                    final_dataset_fields[sub_fld.name] = sub_fld
+            else:
+                examples[k] = fld.transform(df[_to_df_key(k)], train=train)
+                final_dataset_fields[k] = fld
         
-        return cls(examples, {k: v for k, v in fields.items() if v is not None}, train=train)
+        return cls(examples, final_dataset_fields, train=train)
     
     @classmethod
     def from_dfs(cls, train_df: pd.DataFrame, 
                  val_df: pd.DataFrame=None, test_df: pd.DataFrame=None,
-                 fields: Dict[ColumnName, OneorMore[Field]]=None) -> Iterable['TabularDataset']:
+                 fields: Dict[ColumnName, FieldOrFields]=None) -> Iterable['TabularDataset']:
         """
         Generates datasets from train, val, and test dataframes.
         Example:
@@ -143,10 +156,10 @@ class TabularDataset(torch.utils.data.Dataset):
             yield cls.from_df(test_df, non_target_fields, train=False)
         
     @classmethod
-    def from_csv(cls, fname: str, fields: Dict[ColumnName, OneorMore[Field]],
+    def from_csv(cls, fname: str, fields: Dict[ColumnName, FieldOrFields],
                  train=True, csv_read_params: dict={}) -> 'TabularDataset':
         """
-        Initialize a dataset from a csv file.
+        Initialize a dataset from a csv file. See documentation on `TabularDataset.from_df` for more details on arguments.
         Kwargs:
             csv_read_params: Keyword arguments to pass to the `pd.read_csv` method.
         """

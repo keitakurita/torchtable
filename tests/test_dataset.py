@@ -135,3 +135,34 @@ def test_multiple_cols():
         ("a", "b"): Field(LambdaOperator(lambda x: x["a"] + x["b"])),
     })
     np.testing.assert_allclose(train.examples[("a", "b")].values, (df1["a"] + df1["b"]).values)
+
+def test_fieldcollection():
+    """Smoke test to confirm FieldCollection works with TabularDataset"""
+    df = pd.DataFrame({"a": [1, 2, 3, 4, 5],
+                       "b": [-0.4, -2.1, 3.3, 4.4, 5.5]})
+    ds = TabularDataset.from_df(df, fields={
+        "a": CategoricalField(max_features=100),
+        "b": FieldCollection(NumericField(normalization="Gaussian"), Field(LambdaOperator(lambda x: x * 2))),
+    })
+    assert len(ds) == len(df)
+    assert len(ds.fields) == 2
+    for i in range(len(ds)):
+        example = ds[i]
+        assert "a" in example
+        assert "b" in example
+        assert len(example) == 2
+
+def test_fieldcollection_flatten():
+    df = pd.DataFrame({"a": [1, 2, 3, 4, 5],
+                       "b": [-0.4, -2.1, 3.3, 4.4, 5.5]})
+    ds = TabularDataset.from_df(df, fields={
+        "a": CategoricalField(max_features=100),
+        "b": FieldCollection(NumericField(normalization="Gaussian"), Field(LambdaOperator(lambda x: x * 2)), flatten=True),
+    })
+    assert len(ds) == len(df)
+    assert len(ds.fields) == 3
+    for i in range(len(ds)):
+        example = ds[i]
+        assert "a" in example
+        assert "b" not in example
+        assert len(example) == 3
