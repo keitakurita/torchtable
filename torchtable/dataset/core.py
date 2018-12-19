@@ -26,6 +26,7 @@ class TabularDataset(torch.utils.data.Dataset):
     """
     def __init__(self, examples: Dict[ColumnName, OneorMore[ArrayLike]],
                  fields: Dict[ColumnName, Union[Field, FieldCollection]], train=True):
+        """This constructor is not intended to be called directly."""
         self.examples = examples
         example = next(iter(self.examples.values()))
         self.length = fold_oneormore(lambda x,y: len(y), example, [])
