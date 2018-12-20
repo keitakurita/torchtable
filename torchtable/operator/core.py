@@ -139,7 +139,7 @@ class _Normalizer:
             x = erfinv(x)
             return (x - x.mean())
         elif self.method == "MinMax":
-            x = (x - self.min) / (self.max + 1e-8)
+            return (x - self.min) / (self.max - self.min + 1e-8)
         else:
             return x
 

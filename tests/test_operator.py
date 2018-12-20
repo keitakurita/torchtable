@@ -38,6 +38,14 @@ def test_normalizer_rank_gaussian():
     a_normed = norm(a)
     np.testing.assert_almost_equal(a_normed.mean(), 0.)
 
+def test_normalizer_mimax():
+    norm = Normalize("MinMax")
+    rng = np.random.RandomState(21)
+    a = rng.normal(4, 10, (200, ))
+    a_normed = norm(a)
+    np.testing.assert_almost_equal(a_normed.min(), 0.)
+    np.testing.assert_almost_equal(a_normed.max(), 1.)
+
 def test_missing_filler():
     rng = np.random.RandomState(21)
     x = pd.Series(data=rng.normal(0, 1, (100, )))
