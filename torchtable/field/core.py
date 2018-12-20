@@ -79,7 +79,10 @@ class Field:
         """
         Wrapper for indexing. The field must provide the ability to index via a list for batching later on.
         """
-        return example[idx]
+        if isinstance(example, pd.Series):
+            return example.iloc[idx]
+        else:
+            return example[idx]
 
 class IdentityField(Field):
     """

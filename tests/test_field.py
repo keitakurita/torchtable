@@ -100,6 +100,10 @@ def test_index():
     fld = NumericField()
     np.testing.assert_almost_equal(fld.index(np.arange(10), [0, 3, 5]), np.array([0, 3, 5]))
 
+def test_index_series():
+    fld = NumericField()
+    np.testing.assert_almost_equal(fld.index(pd.Series(data=np.arange(10)), [0, 3, 5]), np.array([0, 3, 5]))
+
 def test_index_fieldcollection():
     flds = FieldCollection(NumericField(), NumericField())
     arr1, arr2 = flds.index([np.array([5, 4, 2, 3, 1]), np.array([1, 2, 3, 4, 5])], [1, 4, 2])
