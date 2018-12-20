@@ -237,7 +237,7 @@ class Vocab:
         return x.apply(self._get_index)
 
     def __len__(self):
-        return len(self.index)
+        return len(self.index) + (1 if self.handle_unk else 0)
     
 class Categorize(TransformerOperator):
     """

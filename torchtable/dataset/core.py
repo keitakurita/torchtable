@@ -20,11 +20,11 @@ class FieldDict(dict):
         for k, v in self.items():
             if isinstance(v, FieldCollection):
                 for (i, f) in enumerate(v):
-                    if with_index: yield func(key, f, i)
-                    else: yield func(key, f)
+                    if with_index: yield func(k, f, i)
+                    else: yield func(k, f)
             else:
-                if with_index: yield func(x, -1) 
-                else: yield func(key, x)   
+                if with_index: yield func(k, v, -1) 
+                else: yield func(k, v)   
 
     def flatfilter(self, predicate: Callable[[str, Field], bool]):
         for k, fld in self.items():

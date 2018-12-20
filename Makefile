@@ -8,3 +8,4 @@ export_nb:
 	python export.py dev_nb/02_fields.ipynb
 	python export.py dev_nb/03_dataset.ipynb
 	python export.py dev_nb/04_iterators.ipynb
+	python export.py dev_nb/05_models.ipynb
