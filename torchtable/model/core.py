@@ -48,3 +48,6 @@ class BatchHandlerModel(nn.Module):
         cat_data = [emb(getter(batch)) for emb, getter in zip(self.embs, self.batch_cat_field_getters)]
         num_data = [getter(batch).unsqueeze(1) for getter in self.batch_num_field_getters]
         return torch.cat(cat_data + num_data, dim=1)
+
+    def out_dim(self):
+        return sum(e.embedding_dim for e in self.embs) + len(self.batch_num_field_getters)
