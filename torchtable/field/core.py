@@ -9,7 +9,7 @@ import warnings
 from ..custom_types import *
 
 from ..utils import *
-from ..operator import Operator, LambdaOperator, FillMissing, Categorize, Normalize, ToTensor
+from ..operator import Operator, LambdaOperator, FillMissing, Categorize, Normalize, ToTensor, UnknownCategoryError
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +114,12 @@ class CategoricalField(Field):
                               handle_unk=handle_unk)
         self.vocab = pipeline.transformer
         super().__init__(pipeline, name, is_target, continuous=False, categorical=True, metadata=metadata)
+    
+    def transform(self, x: pd.Series, train=True) -> ArrayLike:
+        try:
+            return super().transform(x, train=train)
+        except UnknownCategoryError:
+            raise UnknownCategoryError(f"Unknown category encountered in {self.name}. Consider setting handle_unk=True.")
     
     @property
     def cardinality(self):

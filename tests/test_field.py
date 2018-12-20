@@ -101,3 +101,11 @@ def test_index_fieldcollection():
 def test_fieldcollection_transform():
     flds = FieldCollection(Field(LambdaOperator(lambda x: x * 2)), Field(LambdaOperator(lambda x: x + 3)))
     assert flds.transform(1) == [2, 4]
+
+def test_unknown_cat():
+    fld = CategoricalField(name="hoge", handle_unk=False)
+    a = pd.Series(data=np.array([1, 2, 3]))
+    fld.transform(a)
+    b = pd.Series(data=np.array([3, 4]))
+    with pytest.raises(UnknownCategoryError):
+        fld.transform(b, train=False)
