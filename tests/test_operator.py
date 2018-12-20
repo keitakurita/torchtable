@@ -84,3 +84,11 @@ def test_to_tensor_bool():
     to_tsr = ToTensor(torch.long)
     tsr = to_tsr(x, device=None)
     tsr = to_tsr(x.values, device=None)
+
+def test_categorize_unk():
+    a = pd.Series(data=np.array([0, 1, 2, 3]))
+    cat = Categorize(handle_unk=False)
+    cat(a)
+    b = pd.Series(data=np.array([4, 5]))
+    with pytest.raises(UnknownCategoryError):
+        cat(b, train=False)

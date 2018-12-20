@@ -112,7 +112,7 @@ class TransformerOperator(Operator):
         return self.transformer.transform(x)
 
 class _Normalizer:
-    _methods = set(["Gaussian", "RankGaussian"])
+    _methods = set(["Gaussian", "RankGaussian", "MinMax"])
 
     def __init__(self, method):
         self.method = method
@@ -125,6 +125,8 @@ class _Normalizer:
         elif self.method == "RankGaussian":
             # TODO: store state
             pass
+        elif self.method == "MinMax":
+            self.min, self.max = x.min(), x.max()
         return self
 
     def transform(self, x: pd.Series) -> pd.Series:
@@ -136,6 +138,8 @@ class _Normalizer:
             x = (rankdata(x) / len(x) - 0.5) * 0.99 * 2
             x = erfinv(x)
             return (x - x.mean())
+        elif self.method == "MinMax":
+            x = (x - self.min) / (self.max + 1e-8)
         else:
             return x
 
@@ -194,6 +198,9 @@ class FillMissing(TransformerOperator):
     def __init__(self, method: Union[Callable, str]):
         super().__init__(_MissingFiller(method))
 
+class UnknownCategoryError(ValueError):
+    pass
+    
 class Vocab:
     """Mapping from category to integer id"""
     def __init__(self, min_freq=0, max_features=None,
@@ -229,7 +236,7 @@ class Vocab:
     
     def _get_index(self, x):
         if x not in self.index and not self.handle_unk:
-            raise ValueError("Found category not in vocabulary. Try setting handle_unk to True.")
+            raise UnknownCategoryError("Found category not in vocabulary. Try setting handle_unk to True.")
         else:
             return self.index[x]
     
