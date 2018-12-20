@@ -137,8 +137,7 @@ class FieldCollection(list):
         for a in args: self.append(a)
         self.flatten = flatten
         self.namespace = None
-        if namespace is not None:
-            self.set_namespace(namespace)
+        self.set_namespace(namespace)
     
     def index(self, examples: List[ArrayLike], idx) -> List[ArrayLike]:
         return [fld.index(ex, idx) for fld, ex in zip(self, examples)]
@@ -150,6 +149,7 @@ class FieldCollection(list):
     def set_namespace(self, nm: str) -> None:
         """Set names of inner fields as well"""
         old_namespace = self.namespace
+        if old_namespace == nm: return
         self.namespace = nm
         for i, fld in enumerate(self):
             if fld.name is None: 

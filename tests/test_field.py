@@ -92,6 +92,7 @@ def test_namespace():
     fld1 = CategoricalField(name="bar")
     flds = FieldCollection(fld0, fld1)
     flds.name = "hoge"
+    flds.name = "hoge"
     assert fld0.name == "hoge/_0"
     assert fld1.name == "hoge/bar"
 
