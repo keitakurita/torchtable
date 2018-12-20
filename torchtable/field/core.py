@@ -128,12 +128,17 @@ class CategoricalField(Field):
 
 class FieldCollection(list):
     """
+    A list of fields with some auxillary methods.
+    Args:
+        flatten: If set to True, each field in this collection will be mapped to one key in the batch/dataset.
+        Otherwise, each field in this collection will be mapped to an entry in a list for the same key in the batch/dataset.
     """
     def __init__(self, *args, flatten: bool=False, namespace: Optional[str]=None):
         for a in args: self.append(a)
         self.flatten = flatten
         self.namespace = None
-        self.set_namespace(namespace)
+        if namespace is not None:
+            self.set_namespace(namespace)
     
     def index(self, examples: List[ArrayLike], idx) -> List[ArrayLike]:
         return [fld.index(ex, idx) for fld, ex in zip(self, examples)]
