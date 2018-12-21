@@ -12,7 +12,7 @@ def to_numpy_array(x: ArrayLike) -> np.array:
     else:
         return np.array(x)
 
-def expand(a: OneorMore[T], n: int) -> Iterable[T]:
+def expand(a: OneorMore, n: int) -> Iterable:
     """Turn 1 or n objects to n objects by repeating if necessary"""
     if isinstance(a, (tuple, list)):
         assert len(a) == n
