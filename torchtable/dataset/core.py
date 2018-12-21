@@ -37,11 +37,13 @@ class FieldDict(dict):
 class TabularDataset(torch.utils.data.Dataset):
     """
     A dataset for tabular data.
+    
     Args:
         fields: A dictionary mapping from a column/columns in the raw data to a Field/Fields.
-                To specify multiple columns as input, use a tuple of column names.
-                To map a single column to multiple fields, use a list of fields.
-                Each field will be mapped to a single entry in the processed dataset.
+            To specify multiple columns as input, use a tuple of column names.
+            To map a single column to multiple fields, use a list of fields.
+            Each field will be mapped to a single entry in the processed dataset.
+                
         train: Whether this dataset is the training set. This affects whether the fields will fit the given data.
     """
     def __init__(self, examples: Dict[ColumnName, OneorMore[ArrayLike]],
@@ -80,36 +82,33 @@ class TabularDataset(torch.utils.data.Dataset):
                 train=True) -> 'TabularDataset':
         """
         Initialize a dataset from a pandas dataframe.
+        
         Args:
             df: pandas dataframe to initialize from
-
             fields: Dictionary mapping from a column identifier to a field or fields.
-            The key can be a single column name or a tuple of multiple columns. The column(s) specified by the key will be passed to the field(s) transform method.
-            The value can be a single field, a list/tuple of fields, or a `field.FieldCollection`.
-            In general, each example in the dataset will mirror the structure of the fields passed.
-            For instance, if you pass multiple fields for a certain key, the example will also have multiple outputs for the given key structured as a list.
-            If you want a flat dictionary for the example, consider using the `flatten` attribute in the `field.FieldCollection` class
-            (see `field.FieldCollection` documentation for more details).
-        Kwargs:
-            train: Whether this dataset is the training set. This affects whether the fields will fit the given data.
+                The key can be a single column name or a tuple of multiple columns. The column(s) specified by the key will be passed to the field(s) transform method.
+                The value can be a single field, a list/tuple of fields, or a `field.FieldCollection`.
+                In general, each example in the dataset will mirror the structure of the fields passed.
+                For instance, if you pass multiple fields for a certain key, the example will also have multiple outputs for the given key structured as a list.
+                If you want a flat dictionary for the example, consider using the `flatten` attribute in the `field.FieldCollection` class
+                (see `field.FieldCollection` documentation for more details).
+            train: Whether this dataset is the training set. 
+                This affects whether the fields will fit the given data.
+
         Example:
-        >>> df.head(2)
-                  authorized_flag          card_id  price
-        0               Y  C_ID_4e6213e9bc       1.2
-        1               Y  C_ID_4e6213e9bc       3.4
-        >>> ds = TabularDataset.from_df(df, fields={
-        ...     "authorized_flag": CategoricalField(handle_unk=False), # standard field
-        ...     "card_id": [CategoricalField(handle_unk=True),
-        ...                 Field(LambdaOperator(lambda x: x.str[0]) > Categorize())], # multiple fields and custom fields
-        ...     "price": NumericField(fill_missing=None, normalization=None, is_target=True), # target field
-        ...     ("authorized_flag", "price"): Field(LambdaOperator(
-        ...             lambda x: (x["authorized_flag"] == "N").astype("int") * x["price"])), # multiple column field
-        ... })
-        >>> ds[0] 
-        {"authorized_flag": 0,
-         "card_id": [1, 0],
-          "price": 1.2,
-          ("authorized_flag", "price"): 0.}
+            >>> ds = TabularDataset.from_df(df, fields={
+            ...     "authorized_flag": CategoricalField(handle_unk=False), # standard field
+            ...     "card_id": [CategoricalField(handle_unk=True),
+            ...                 Field(LambdaOperator(lambda x: x.str[0]) > Categorize())], # multiple fields and custom fields
+            ...     "price": NumericField(fill_missing=None, normalization=None, is_target=True), # target field
+            ...     ("authorized_flag", "price"): Field(LambdaOperator(
+            ...             lambda x: (x["authorized_flag"] == "N").astype("int") * x["price"])), # multiple column field
+            ... })
+            >>> ds[0] 
+            {"authorized_flag": 0,
+             "card_id": [1, 0],
+              "price": 1.2,
+              ("authorized_flag", "price"): 0.}
         """
         missing_cols = set(df.columns) - set(fields.keys())
         if len(missing_cols) > 0:
@@ -150,9 +149,9 @@ class TabularDataset(torch.utils.data.Dataset):
         """
         Generates datasets from train, val, and test dataframes.
         Example:
-        >>> trn, val, test = TabularDataset.from_dfs(train_df, val_df=val_df, test_df=test_df, fields={
-        ...   "a": NumericalField(), "b": CategoricalField(),
-        ...  })
+            >>> trn, val, test = TabularDataset.from_dfs(train_df, val_df=val_df, test_df=test_df, fields={
+            ...   "a": NumericField(), "b": CategoricalField(),
+            ...  })
         """
         train = cls.from_df(train_df, fields, train=True)
         yield train
@@ -181,7 +180,7 @@ class TabularDataset(torch.utils.data.Dataset):
                  train=True, csv_read_params: dict={}) -> 'TabularDataset':
         """
         Initialize a dataset from a csv file. See documentation on `TabularDataset.from_df` for more details on arguments.
-        Kwargs:
+        Args:
             csv_read_params: Keyword arguments to pass to the `pd.read_csv` method.
         """
         return cls.from_df(pd.read_csv(fname, **csv_read_params), fields=fields, train=train)

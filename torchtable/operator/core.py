@@ -67,7 +67,8 @@ class Operator:
     def apply(self, x: Any, train=True) -> Any:
         """
         Takes output of previous stage in the pipeline and produces output. Override in subclasses.
-        Kwargs:
+        
+        Args:
             train: If true, this operator will "train" on the input. 
             In other words, the internal parameters of this operator may change to fit the given input.
         """
@@ -82,6 +83,7 @@ class Operator:
 class LambdaOperator(Operator):
     """
     Generic operator for stateless operation.
+    
     Args:
         func: Function to apply to input.
     """
@@ -95,8 +97,10 @@ class LambdaOperator(Operator):
 class TransformerOperator(Operator):
     """
     Wrapper for any stateful transformer with fit and transform methods.
+    
     Args:
         transformer: Any object with a `fit` and `transform` method.
+
     Example:
         >>> op = TransformerOperator(sklearn.preprocessing.StandardScaler())
     """
@@ -146,6 +150,7 @@ class _Normalizer:
 class Normalize(TransformerOperator):
     """
     Normalizes a numeric field.
+    
     Args:
         method: Method of normalization (choose from the following):
         - None: No normalization will be applied (same as noop)
@@ -187,6 +192,7 @@ class _MissingFiller:
 class FillMissing(TransformerOperator):
     """
     Fills missing values according to `method`
+    
     Args:
         method: Method of filling missing values. Options:
         - None: Do not fill missing values
@@ -249,14 +255,16 @@ class Vocab:
 class Categorize(TransformerOperator):
     """
     Converts categorical data into integer ids
+    
     Args:
-        min_freq: Minimum frequency required for a category to receive a unique id.
-        Any categories with a lower frequency will be treated as unknown categories.
-        max_features: Maximum number of unique categories to store. If larger than the number of actual categories,
-        the categories with the highest frequencies will be chosen. If None, there will be no limit on the number of categories.
+        min_freq: Minimum frequency required for a category to receive a unique id. 
+            Any categories with a lower frequency will be treated as unknown categories.
+        
+        max_features: Maximum number of unique categories to store. 
+            If larger than the number of actual categories, the categories with the highest frequencies will be chosen. If None, there will be no limit on the number of categories.
+        
         handle_unk: Whether to allocate a unique id to unknown categories. 
-        If you expect to see categories that you did not encounter in your training data, you should set this to True.
-        If None, handle_unk will be set to True if min_freq > 0 or max_features is not None, otherwise it will be False.
+            If you expect to see categories that you did not encounter in your training data, you should set this to True. If None, handle_unk will be set to True if min_freq > 0 or max_features is not None, otherwise it will be False.
     """
     def __init__(self, min_freq: int=0, max_features: Optional[int]=None,
                  handle_unk: Optional[bool]=None):
@@ -270,6 +278,7 @@ class Categorize(TransformerOperator):
 class ToTensor(Operator):
     """
     Convert input to a `torch.tensor`
+    
     Args:
         dtype: The dtype of the output tensor
     """

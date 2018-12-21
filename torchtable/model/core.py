@@ -12,6 +12,10 @@ import torch
 import torch.nn as nn
 
 class BatchHandlerModel(nn.Module):
+    """
+    A model that takes a batch as input and converts it into a single 2-d tensor.
+    Categorical fields are all embedded and the embeddings are all concatenated along with the numerical fields.
+    """
     def __init__(self, embs: List[nn.Module],
                  batch_cat_field_getters: List[Callable[[Dict], torch.tensor]],
                  batch_num_field_getters: Callable[[Dict], torch.tensor]):

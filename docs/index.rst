@@ -12,8 +12,6 @@ In the meantime, I've done my best to document the code so far, so feel free to 
    :maxdepth: 2
    :caption: Contents:
 
-
-
 Indices and tables
 ==================
 

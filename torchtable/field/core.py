@@ -19,24 +19,25 @@ class Field:
     Primarily, it stores a pipeline to apply to a column/set of columns in the input.
     It also stores a pipeline for converting the input batch to an appropriate type for the downstream model (generally a torch.tensor).
     This class can directly be instantiated with a custom pipeline but is generally used as a subclass for other fields.
+
     Example:
         >>> fld = Field(LambdaOperator(lambda x: x + 1) > LambdaOperator(lambda x: x ** 2))
         >>> fld.transform(1)
         ... 9
+    
     Args:
         pipeline: An operator representing the set of operations mapping the input column to the output.
-        This transformation will be applied during the construction of the dataset. 
-        If the pipeline is resource intensive and applying it all at once is unrealistic, consider deferring some of the processing to `batch_pipeline`.
-    Kwargs:
+            This transformation will be applied during the construction of the dataset. 
+            If the pipeline is resource intensive and applying it all at once is unrealistic, consider deferring some of the processing to `batch_pipeline`.
         is_target: Whether the field is an input or target field. Affects default batching behavior.
         continuous: Whether the output is continuous.
         categorical: Whether the output is categorical/discrete.
         batch_pipeline: The transformation to apply to this field during batching.
-        By default, this will simply be an operation to transform the input to a tensor to feed to the model.
-        This can be set to any Operator that the user wishes so that arbitrary transformations (e.g. padding, noising) can be applied during data loading.
+            By default, this will simply be an operation to transform the input to a tensor to feed to the model.
+            This can be set to any Operator that the user wishes so that arbitrary transformations (e.g. padding, noising) can be applied during data loading.
         dtype: The output tensor dtype. Only relevant when batch_pipeline is None (using the default pipeline).
         metadata: Additional data about the field to store. 
-        Use cases include adding data about model parameters (e.g. size of embeddings for this field).
+            Use cases include adding data about model parameters (e.g. size of embeddings for this field).
     """
     def __init__(self, pipeline: Operator, name: Optional[str]=None,
                  is_target: bool=False, continuous: bool=True,
@@ -62,8 +63,9 @@ class Field:
         Method to process the input column during construction of the dataset.
         Kwargs:
             train: If true, this transformation may change some internal parameters of the pipeline.
-            For instance, if there is a normalization step in the pipeline, the mean and std will be computed on the current input.
-            Otherwise, the pipeline will use statistics computed in the past.
+                For instance, if there is a normalization step in the pipeline, 
+                the mean and std will be computed on the current input.
+                Otherwise, the pipeline will use statistics computed in the past.
         """
         return self.pipeline(x, train=train)
 
@@ -95,8 +97,10 @@ class IdentityField(Field):
 class NumericField(Field):
     """
     A field corresponding to a continous, numerical output (e.g. price, distance, etc.)
+    
     Args:
         fill_missing: The method of filling missing values. See the `FillMissing` operator for details.
+        
         normalization: The method of normalization. See the `Normalize` operator for details.
     """
     def __init__(self, name=None,
@@ -108,6 +112,7 @@ class NumericField(Field):
 class CategoricalField(Field):
     """
     A field corresponding to a categorica, discrete output (e.g. id, group, gender)
+    
     Args:
         See the `Categorize` operator for more details.
     """
@@ -132,9 +137,10 @@ class CategoricalField(Field):
 class FieldCollection(list):
     """
     A list of fields with some auxillary methods.
+    
     Args:
         flatten: If set to True, each field in this collection will be mapped to one key in the batch/dataset.
-        Otherwise, each field in this collection will be mapped to an entry in a list for the same key in the batch/dataset.
+            Otherwise, each field in this collection will be mapped to an entry in a list for the same key in the batch/dataset.
     """
     def __init__(self, *args, flatten: bool=False, namespace: Optional[str]=None):
         for a in args: self.append(a)
@@ -160,45 +166,6 @@ class FieldCollection(list):
             else:
                 if old_namespace is not None and fld.name.startswith(f"{old_namespace}/"):
                     fld.name = fld.name[len(old_namespace)+1:]
-                fld.name = f"{self.namespace}/{fld.name}"    
-    @name.setter
-    def name(self, nm: str):
-        self.set_namespace(nm)
-    
-    def transform(self, *args, **kwargs) -> list:
-        """Applies transform with each field and returns a list"""
-        return [fld.transform(*args, **kwargs) for fld in self]
-
-class FieldCollection(list):
-    """
-    A list of fields with some auxillary methods.
-    Args:
-        flatten: If set to True, each field in this collection will be mapped to one key in the batch/dataset.
-        Otherwise, each field in this collection will be mapped to an entry in a list for the same key in the batch/dataset.
-    """
-    def __init__(self, *args, flatten: bool=False, namespace: Optional[str]=None):
-        for a in args: self.append(a)
-        self.flatten = flatten
-        self.namespace = None
-        self.set_namespace(namespace)
-    
-    def index(self, examples: List[ArrayLike], idx) -> List[ArrayLike]:
-        return [fld.index(ex, idx) for fld, ex in zip(self, examples)]
-
-    @property
-    def name(self) -> str:
-        return self.namespace
-        
-    def set_namespace(self, nm: str) -> None:
-        """Set names of inner fields as well"""
-        old_namespace = self.namespace
-        if old_namespace == nm: return
-        self.namespace = nm
-        for i, fld in enumerate(self):
-            if fld.name is None: 
-                fld.name = f"{self.namespace}/_{i}"
-            else:
-                fld.name = fld.name.split("/")[-1]
                 fld.name = f"{self.namespace}/{fld.name}"    
     @name.setter
     def name(self, nm: str):
