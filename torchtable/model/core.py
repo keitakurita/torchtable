@@ -35,6 +35,7 @@ class BatchHandlerModel(nn.Module):
         batch_cat_field_getters: List[Callable[[Dict], torch.tensor]] = []
         batch_num_field_getters: List[Callable[[Dict], torch.tensor]] = []
         def register_field(k: str, fld: Field, i: int):
+            if fld.is_target: return
             getter = (lambda b: b[k][i]) if i > -1 else (lambda b: b[k])
             if fld.categorical:
                 embs.append(cls.field_to_embedding(fld))

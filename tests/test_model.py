@@ -88,3 +88,16 @@ def test_from_dataset_flattened():
     model = BatchHandlerModel.from_dataset(ds)
     batch, _ = next(iter(dl))
     assert model(batch).size(0) == 4
+
+def test_from_dataset_target():
+    df = pd.DataFrame({"a": [1, 2, 3, 4, 5],
+                       "b": [-0.4, -2.1, 3.3, 4.4, 5.5]})
+    ds = TabularDataset.from_df(df, fields={
+        "a": NumericField(is_target=True),
+        "b": NumericField(),
+    })
+    dl = DefaultLoader.from_dataset(ds, 4)
+    model = BatchHandlerModel.from_dataset(ds)
+    batch, _ = next(iter(dl))
+    assert model(batch).size(0) == 4
+    assert model(batch).size(1) == 1
