@@ -164,8 +164,7 @@ class FieldCollection(list):
             if fld.name is None: 
                 fld.name = f"{self.namespace}/_{i}"
             else:
-                if old_namespace is not None and fld.name.startswith(f"{old_namespace}/"):
-                    fld.name = fld.name[len(old_namespace)+1:]
+                fld.name = fld.name.split("/")[-1]
                 fld.name = f"{self.namespace}/{fld.name}"    
     @name.setter
     def name(self, nm: str):
