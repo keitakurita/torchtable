@@ -17,6 +17,9 @@ scipy = "*"
 pytest = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
+kaggle = "*"
+scikit-learn = "*"
+jupyter = "*"
 
 [requires]
 python_version = "3.6"
