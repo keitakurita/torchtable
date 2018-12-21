@@ -10,7 +10,15 @@ In the meantime, I've done my best to document the code so far, so feel free to 
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption:  Package Reference
+
+   torchtable.utils <torchtable.utils>
+   torchtext.operator <torchtable.operator>
+   torchtext.field <torchtable.field>
+   torchtext.dataset <torchtable.dataset>
+   torchtext.loader <torchtable.loader>
+   torchtext.model <torchtable.model>
+
 
 Indices and tables
 ==================
