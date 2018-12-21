@@ -166,3 +166,18 @@ def test_fieldcollection_flatten():
         assert "a" in example
         assert "b" not in example
         assert len(example) == 3
+
+def test_field_collection_dfs():
+    df1 = pd.DataFrame({"a": [1, 2, 3, 4, 5],
+                       "b": [-0.4, -2.1, 3.3, 4.4, 5.5]})
+    df2 = pd.DataFrame({"a": [6, 7],
+                       "b": [-1.3, 4.5]})
+    
+    ds1, ds2 = TabularDataset.from_dfs(df1, test_df=df2, fields={
+        "a": CategoricalField(max_features=100),
+        "b": FieldCollection(NumericField(normalization="Gaussian"), Field(LambdaOperator(lambda x: x * 2))),
+    })
+    assert len(ds1) == len(df1)
+    assert len(ds1.fields) == len(ds2.fields)
+    assert ds1.fields["b"][0].name == "b/_0"
+    assert ds1.fields["b"][1].name == "b/_1"

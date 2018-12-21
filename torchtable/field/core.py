@@ -168,3 +168,42 @@ class FieldCollection(list):
     def transform(self, *args, **kwargs) -> list:
         """Applies transform with each field and returns a list"""
         return [fld.transform(*args, **kwargs) for fld in self]
+
+class FieldCollection(list):
+    """
+    A list of fields with some auxillary methods.
+    Args:
+        flatten: If set to True, each field in this collection will be mapped to one key in the batch/dataset.
+        Otherwise, each field in this collection will be mapped to an entry in a list for the same key in the batch/dataset.
+    """
+    def __init__(self, *args, flatten: bool=False, namespace: Optional[str]=None):
+        for a in args: self.append(a)
+        self.flatten = flatten
+        self.namespace = None
+        self.set_namespace(namespace)
+    
+    def index(self, examples: List[ArrayLike], idx) -> List[ArrayLike]:
+        return [fld.index(ex, idx) for fld, ex in zip(self, examples)]
+
+    @property
+    def name(self) -> str:
+        return self.namespace
+        
+    def set_namespace(self, nm: str) -> None:
+        """Set names of inner fields as well"""
+        old_namespace = self.namespace
+        if old_namespace == nm: return
+        self.namespace = nm
+        for i, fld in enumerate(self):
+            if fld.name is None: 
+                fld.name = f"{self.namespace}/_{i}"
+            else:
+                fld.name = fld.name.split("/")[-1]
+                fld.name = f"{self.namespace}/{fld.name}"    
+    @name.setter
+    def name(self, nm: str):
+        self.set_namespace(nm)
+    
+    def transform(self, *args, **kwargs) -> list:
+        """Applies transform with each field and returns a list"""
+        return [fld.transform(*args, **kwargs) for fld in self]
