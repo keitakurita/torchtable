@@ -41,8 +41,9 @@ class Field:
     """
     def __init__(self, pipeline: Operator, name: Optional[str]=None,
                  is_target: bool=False, continuous: bool=True,
-                 categorical: bool=False, batch_pipeline: Optional[Operator]=None,
-                 dtype: Optional[torch.dtype]=None, metadata: dict={}):
+                 categorical: bool=False, cardinality: Optional[int]=None,
+                 batch_pipeline: Optional[Operator]=None, dtype: Optional[torch.dtype]=None, 
+                 metadata: dict={}):
         self.pipeline = pipeline
         self.name = name
         self.is_target = is_target
@@ -50,6 +51,7 @@ class Field:
             raise ValueError("""A field cannot be both continuous and categorical. 
             If you want both a categorical and continuous representation, consider using multiple fields.""")
         self.continuous, self.categorical = continuous, categorical
+        self._cardinality = cardinality
 
         if dtype is not None and batch_pipeline is not None:
             logger.warning("""Setting a custom batch pipeline will cause this field to ignore the dtype argument.
@@ -85,6 +87,11 @@ class Field:
             return example.iloc[idx]
         else:
             return example[idx]
+
+    @property
+    def cardinality(self):
+        """Relevant for categorical data. For custom fields, the cardinality must be passed explicity."""
+        return self._cardinality
 
 class IdentityField(Field):
     """
