@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 cd = os.path.dirname(__file__)
 
@@ -18,6 +18,7 @@ setup(
     description="Tools for processing tabular datasets for PyTorch",
     long_description=long_description,
     license="MIT",
+    url="https://github.com/keitakurita/torchtable",
     python_requires = ">=3.6",
     keywords = "PyTorch, deep learning, machine learning",
     setup_requires=["pytest", ],
@@ -27,4 +28,5 @@ setup(
         "scipy",
         "torch>=1.0.0",
     ],
+    packages=find_packages(),
 )
